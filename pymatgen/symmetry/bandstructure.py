@@ -11,6 +11,7 @@ from __future__ import division, unicode_literals
 import itertools
 import numpy as np
 import networkx as nx
+from warnings import warn
 from pymatgen.symmetry.kpath import KPathBase, KPathSetyawanCurtarolo, KPathLatimerMunro, KPathSeek
 
 __author__ = "Jason Munro"
@@ -198,9 +199,18 @@ class HighSymmKpath(KPathBase):
         bs = KPathSeek(self._structure, symprec, angle_tolerance, atol, tri)
 
         kpoints = bs.kpath["kpoints"]
+        
         tmat = bs._tmat
-        for key in kpoints:
+        
+        for key in kpoints:          
             kpoints[key] = np.dot(np.transpose(np.linalg.inv(tmat)), kpoints[key])
+
+        bs.kpath["kpoints"] = kpoints
+        self._rec_lattice = self._structure.lattice.reciprocal_lattice
+
+        warn("K-path from the Hinuma et al. convention has been transformed to basis " 
+        "of the reciprocal lattice of the input structure. "
+        "Use `KPathSeek` for the path in the original author-intended basis.")
 
         return bs
 
